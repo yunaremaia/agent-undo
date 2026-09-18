@@ -128,7 +128,7 @@ MIT
 
 ## Contributing
 
-PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Security
 

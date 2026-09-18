@@ -33,6 +33,10 @@ ruff format .
 4. Update the README if adding user-facing features.
 5. Open a PR with a clear description of the change.
 
+## Code of Conduct
+
+Please note that `agent-undo` is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
