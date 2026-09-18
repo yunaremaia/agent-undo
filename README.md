@@ -78,6 +78,8 @@ cd agent-undo
 pip install -e ".[dev]"
 ```
 
+For applications embedding the journal, see the [Python API reference](docs/api.md).
+
 ## Hooks
 
 ### Claude Code (`.claude/settings.json`)
