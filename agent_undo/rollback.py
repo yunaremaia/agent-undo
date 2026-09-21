@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import json
-import textwrap
-from pathlib import Path
+import shlex
 
 from .journal import Journal
 
@@ -56,17 +55,27 @@ class RollbackGenerator:
     def _undo_op(self, op: dict) -> list[str]:
         """Generate undo commands for a single operation."""
         op_type = op["op_type"]
-        lines = [f"# [{op_type}] {op.get('command') or op.get('path') or op.get('checkpoint_label', '')}"]
+        detail = op.get("command") or op.get("path") or op.get("checkpoint_label", "")
+        if op_type == "file-write" and op.get("path") is not None:
+            detail = json.dumps(op["path"])
+        lines = [f"# [{op_type}] {detail}"]
 
         if op_type == "file-write" and op.get("content_before") is not None:
-            path = op["path"]
-            lines.append(f"if [ -f '{path}' ]; then")
-            # Escape content for heredoc-safe embedding
-            before = op["content_before"].replace("'", "'\\''")
-            lines.append(f"  cat > '{path}' << 'AGENT_UNDO_EOF'")
-            lines.append(f"{(before)}")
-            lines.append(f"AGENT_UNDO_EOF")
-            lines.append(f"fi")
+            path = shlex.quote(op["path"])
+            before = op["content_before"]
+            delimiter_base = f"AGENT_UNDO_EOF_{op.get('id', 'op')}"
+            delimiter = delimiter_base
+            suffix = 1
+            content_lines = set(before.splitlines())
+            while delimiter in content_lines:
+                delimiter = f"{delimiter_base}_{suffix}"
+                suffix += 1
+
+            lines.append(f"if [ -f {path} ]; then")
+            lines.append(f"  cat > {path} << '{delimiter}'")
+            lines.append(before)
+            lines.append(delimiter)
+            lines.append("fi")
 
         elif op_type == "shell" and op.get("command"):
             # Shell commands can't be auto-undone, but we note them
@@ -83,7 +92,7 @@ class RollbackGenerator:
                 lines.append(f"git reset --soft HEAD~1  # Undo: {cmd}")
             elif cmd.startswith("git push"):
                 lines.append(f"# WARNING: Remote push cannot be auto-undone: {cmd}")
-                lines.append(f"# Consider: git push --force-with-lease origin <previous-ref>")
+                lines.append("# Consider: git push --force-with-lease origin <previous-ref>")
             elif cmd.startswith("git branch -D"):
                 lines.append(f"# Deleted branch cannot be recovered from journal alone: {cmd}")
             else:
