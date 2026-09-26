@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 
 from .journal import Journal
-from .rollback import RollbackGenerator, preview_rollback
+from .rollback import RollbackGenerator, preview_rollback, simulate_rollback
 
 DEFAULT_DB = Path.cwd() / ".agent-undo" / "journal.db"
 
@@ -89,14 +89,20 @@ def cmd_checkpoint(args: list[str]) -> int:
 
 
 def cmd_rollback(args: list[str]) -> int:
-    """Generate a rollback script."""
+    """Generate a rollback script or show simulation."""
     db_path = Path(args[0]) if args else DEFAULT_DB
     checkpoint = args[1] if len(args) > 1 else None
+    dry_run = "--dry-run" in args
 
     journal = Journal(db_path)
     session_id = get_session_id()
-    gen = RollbackGenerator(journal)
 
+    if dry_run:
+        gen = RollbackGenerator(journal)
+        print(simulate_rollback(gen, session_id, checkpoint_label=checkpoint))
+        return 0
+
+    gen = RollbackGenerator(journal)
     script = gen.generate(session_id, checkpoint_label=checkpoint)
 
     output = "undo.sh"
