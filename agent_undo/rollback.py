@@ -193,16 +193,21 @@ def format_simulation(plan: RollbackPlan) -> str:
     ]
 
     # Categorize operations
-    file_writes_restoring = [op for op in plan.operations
-                              if op.op_type == "file-write" and op.content_before is not None]
-    file_writes_unconditional = [op for op in plan.operations
-                                 if op.op_type == "file-write" and op.content_before is None]
+    file_writes_restoring = [
+        op for op in plan.operations if op.op_type == "file-write" and op.content_before is not None
+    ]
+    file_writes_unconditional = [
+        op for op in plan.operations if op.op_type == "file-write" and op.content_before is None
+    ]
     shell_ops = [op for op in plan.operations if op.op_type == "shell"]
     git_ops = [op for op in plan.operations if op.op_type == "git"]
     api_ops = [op for op in plan.operations if op.op_type == "api"]
     checkpoint_ops = [op for op in plan.operations if op.op_type == "checkpoint"]
-    other_ops = [op for op in plan.operations
-                 if op.op_type not in ("file-write", "shell", "git", "api", "checkpoint")]
+    other_ops = [
+        op
+        for op in plan.operations
+        if op.op_type not in ("file-write", "shell", "git", "api", "checkpoint")
+    ]
 
     if file_writes_restoring:
         lines.append("Files that will be RESTORED (reverted to previous content):")

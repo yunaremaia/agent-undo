@@ -80,8 +80,14 @@ class Journal:
                     content_before, content_after, exit_code, metadata, parent_id)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
-                    session_id, op_type, ts, command, path,
-                    content_before, content_after, exit_code,
+                    session_id,
+                    op_type,
+                    ts,
+                    command,
+                    path,
+                    content_before,
+                    content_after,
+                    exit_code,
                     json.dumps(metadata) if metadata else None,
                     parent_id,
                 ),

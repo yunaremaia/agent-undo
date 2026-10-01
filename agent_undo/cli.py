@@ -49,8 +49,11 @@ def cmd_log(args: list[str]) -> int:
     exit_code = int(os.environ.get("AGENT_UNDO_EXIT_CODE", "0"))
 
     op_id = journal.record(
-        session_id, op_type,
-        command=command, path=path, exit_code=exit_code,
+        session_id,
+        op_type,
+        command=command,
+        path=path,
+        exit_code=exit_code,
     )
     print(f"Recorded {op_type} (id={op_id})")
     return 0

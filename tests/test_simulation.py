@@ -32,8 +32,9 @@ class TestRollbackPlan:
 
     def test_plan_with_operations(self):
         ops = [
-            RollbackOperation(op_type="file-write", path="/tmp/a.txt",
-                              content_before="old content"),
+            RollbackOperation(
+                op_type="file-write", path="/tmp/a.txt", content_before="old content"
+            ),
             RollbackOperation(op_type="shell", command="echo hello"),
         ]
         plan = RollbackPlan(session_id="s1", target_op_id=1, operations=ops)
@@ -60,11 +61,9 @@ class TestRollbackOperation:
 class TestGeneratePlan:
     def test_plan_from_checkpoint(self, journal, generator):
         session_id = "test-sess"
-        journal.record(session_id, "file-write", path="/tmp/a.txt",
-                       content_before="original")
+        journal.record(session_id, "file-write", path="/tmp/a.txt", content_before="original")
         cp_id = journal.checkpoint(session_id, "cp1")
-        journal.record(session_id, "file-write", path="/tmp/b.txt",
-                       content_before="original b")
+        journal.record(session_id, "file-write", path="/tmp/b.txt", content_before="original b")
         journal.record(session_id, "shell", command="echo done")
 
         plan = generator.generate_plan(session_id, checkpoint_label="cp1")
@@ -97,10 +96,10 @@ class TestFormatSimulation:
         session_id = "test-sess"
         journal.checkpoint(session_id, "cp1")
         # Insert ops AFTER the checkpoint
-        journal.record(session_id, "file-write", path="/tmp/config.py",
-                       content_before="DEBUG = False\n")
-        journal.record(session_id, "file-write", path="/tmp/b.txt",
-                       content_before="original b")
+        journal.record(
+            session_id, "file-write", path="/tmp/config.py", content_before="DEBUG = False\n"
+        )
+        journal.record(session_id, "file-write", path="/tmp/b.txt", content_before="original b")
 
         plan = generator.generate_plan(session_id, checkpoint_label="cp1")
         output = format_simulation(plan)

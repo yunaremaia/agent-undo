@@ -55,7 +55,8 @@ def run_pre_tool_hook(tool_name: str, tool_input: str) -> None:
             pass
 
     journal.record(
-        session_id, op_type,
+        session_id,
+        op_type,
         command=tool_input,
         path=path or None,
         content_before=content_before,
@@ -69,7 +70,8 @@ def run_post_tool_hook(tool_name: str, tool_output: str, exit_code: int) -> None
     session_id = get_session_id()
 
     journal.record(
-        session_id, "tool-result",
+        session_id,
+        "tool-result",
         command=f"{tool_name} (exit={exit_code})",
         exit_code=exit_code,
         metadata={"tool": tool_name, "output_length": len(tool_output)},
@@ -85,10 +87,12 @@ def shell_wrapper(agent_cmd: list[str], db_path: Path | None = None) -> int:
     journal.checkpoint(session_id, "wrap-start")
 
     import shlex
+
     cmd_str = " ".join(shlex.quote(c) for c in agent_cmd)
 
     journal.record(
-        session_id, "shell",
+        session_id,
+        "shell",
         command=cmd_str,
         metadata={"wrapped": True, "argv": agent_cmd},
     )
@@ -103,7 +107,8 @@ def shell_wrapper(agent_cmd: list[str], db_path: Path | None = None) -> int:
         exit_code = 130
 
     journal.record(
-        session_id, "shell-result",
+        session_id,
+        "shell-result",
         command=f"{cmd_str} (exit={exit_code})",
         exit_code=exit_code,
     )
