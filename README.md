@@ -44,7 +44,7 @@ Existing tools solve parts of this:
 ## Quick Start
 
 ```bash
-pip install agent-undo
+pip install git+https://github.com/yunaremaia/agent-undo.git
 
 # Start recording your agent session
 agent-undo init
@@ -67,7 +67,7 @@ bash undo.sh
 ## Installation
 
 ```bash
-pip install agent-undo
+pip install git+https://github.com/yunaremaia/agent-undo.git
 ```
 
 Or install from source:
