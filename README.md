@@ -43,6 +43,10 @@ Existing tools solve parts of this:
 
 ## Quick Start
 
+> **Not on PyPI yet.** `agent-undo` has no PyPI release, so `pip install
+> agent-undo` fails with "No matching distribution found". Install from Git for
+> now.
+
 ```bash
 pip install git+https://github.com/yunaremaia/agent-undo.git
 
