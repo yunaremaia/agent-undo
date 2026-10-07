@@ -204,8 +204,10 @@ class TestDiffPreviewLineNumbers:
 class TestRollbackWithoutCheckpoint:
     """Tests for rollback --dry-run without checkpoint — bug fix for issue #61."""
 
-    def test_dry_run_without_checkpoint_shows_all_operations(self, generator, journal, capsys, tmp_path, monkeypatch):
-        """rollback --dry-run without --checkpoint should show all operations, not raise ValueError."""
+    def test_dry_run_without_checkpoint_shows_all_operations(
+        self, generator, journal, capsys, tmp_path, monkeypatch
+    ):
+        """rollback --dry-run without --checkpoint should show all operations."""
         session_id = "test-sess"
         journal.record(session_id, "file-write", path="/tmp/a.txt", content_before="original a")
         journal.record(session_id, "shell", command="echo hello")
@@ -244,7 +246,9 @@ class TestRollbackWithoutCheckpoint:
         assert result == 0
         assert "No operations recorded yet." in captured.out
 
-    def test_dry_run_with_checkpoint_still_works(self, generator, journal, capsys, tmp_path, monkeypatch):
+    def test_dry_run_with_checkpoint_still_works(
+        self, generator, journal, capsys, tmp_path, monkeypatch
+    ):
         """rollback --dry-run with --checkpoint should still work as before."""
         session_id = "test-sess"
         journal.checkpoint(session_id, "cp1")

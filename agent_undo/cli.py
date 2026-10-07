@@ -114,7 +114,7 @@ def cmd_rollback(args: list[str]) -> int:
                 print("No operations recorded yet.")
                 return 0
             # Build a plan from all operations (excluding checkpoints)
-            from .rollback import RollbackPlan, RollbackOperation, format_simulation
+            from .rollback import RollbackOperation, RollbackPlan, format_simulation
             operations = [
                 RollbackOperation(
                     op_type=op["op_type"],
