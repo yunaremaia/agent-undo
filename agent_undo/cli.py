@@ -94,19 +94,60 @@ def cmd_checkpoint(args: list[str]) -> int:
 def cmd_rollback(args: list[str]) -> int:
     """Generate a rollback script or show simulation."""
     db_path = Path(args[0]) if args else DEFAULT_DB
-    checkpoint = args[1] if len(args) > 1 else None
-    dry_run = "--dry-run" in args
+    checkpoint = None
+    dry_run = False
+    for arg in args[1:]:
+        if arg == "--dry-run":
+            dry_run = True
+        elif checkpoint is None:
+            checkpoint = arg
 
     journal = Journal(db_path)
     session_id = get_session_id()
 
     if dry_run:
         gen = RollbackGenerator(journal)
-        print(simulate_rollback(gen, session_id, checkpoint_label=checkpoint))
+        if checkpoint is None:
+            # Show all operations since the start of the session
+            ops = journal.get_session_ops(session_id)
+            if not ops:
+                print("No operations recorded yet.")
+                return 0
+            # Build a plan from all operations (excluding checkpoints)
+            from .rollback import RollbackPlan, RollbackOperation, format_simulation
+            operations = [
+                RollbackOperation(
+                    op_type=op["op_type"],
+                    path=op.get("path"),
+                    command=op.get("command"),
+                    label=op.get("checkpoint_label", ""),
+                    content_before=op.get("content_before"),
+                )
+                for op in ops
+                if op["op_type"] != "checkpoint"
+            ]
+            plan = RollbackPlan(
+                session_id=session_id,
+                target_op_id=0,
+                operations=operations,
+            )
+            print(format_simulation(plan))
+        else:
+            print(simulate_rollback(gen, session_id, checkpoint_label=checkpoint))
         return 0
 
     gen = RollbackGenerator(journal)
-    script = gen.generate(session_id, checkpoint_label=checkpoint)
+    if checkpoint is None:
+        # Generate script for all operations since start
+        ops = journal.get_session_ops(session_id)
+        if not ops:
+            print("No operations to undo.")
+            return 0
+        # Use the first operation as target (undo everything after it)
+        first_op_id = ops[0]["id"]
+        script = gen.generate(session_id, target_op_id=first_op_id)
+    else:
+        script = gen.generate(session_id, checkpoint_label=checkpoint)
 
     output = "undo.sh"
     Path(output).write_text(script)

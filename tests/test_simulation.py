@@ -199,3 +199,67 @@ class TestDiffPreviewLineNumbers:
 
         # Empty content has 0 lines
         assert "@@ -1,N +1,N @@" not in output
+
+
+class TestRollbackWithoutCheckpoint:
+    """Tests for rollback --dry-run without checkpoint — bug fix for issue #61."""
+
+    def test_dry_run_without_checkpoint_shows_all_operations(self, generator, journal, capsys, tmp_path, monkeypatch):
+        """rollback --dry-run without --checkpoint should show all operations, not raise ValueError."""
+        session_id = "test-sess"
+        journal.record(session_id, "file-write", path="/tmp/a.txt", content_before="original a")
+        journal.record(session_id, "shell", command="echo hello")
+        journal.record(session_id, "file-write", path="/tmp/b.txt", content_before="original b")
+
+        # Set up session file so get_session_id returns the same session
+        session_dir = tmp_path / ".agent-undo"
+        session_dir.mkdir(exist_ok=True)
+        (session_dir / "session").write_text(session_id)
+        monkeypatch.chdir(tmp_path)
+
+        from agent_undo.cli import cmd_rollback
+        db_path = str(journal.db_path)
+        result = cmd_rollback([db_path, "--dry-run"])
+
+        captured = capsys.readouterr()
+        assert result == 0
+        assert "=== Rollback Simulation ===" in captured.out
+        assert "[RESTORE] /tmp/a.txt" in captured.out
+        assert "[RESTORE] /tmp/b.txt" in captured.out
+        assert "echo hello" in captured.out
+
+    def test_dry_run_without_checkpoint_no_operations(self, journal, capsys, tmp_path, monkeypatch):
+        """rollback --dry-run without operations should show a clear message."""
+        session_id = "test-sess"
+        session_dir = tmp_path / ".agent-undo"
+        session_dir.mkdir(exist_ok=True)
+        (session_dir / "session").write_text(session_id)
+        monkeypatch.chdir(tmp_path)
+
+        from agent_undo.cli import cmd_rollback
+        db_path = str(journal.db_path)
+        result = cmd_rollback([db_path, "--dry-run"])
+
+        captured = capsys.readouterr()
+        assert result == 0
+        assert "No operations recorded yet." in captured.out
+
+    def test_dry_run_with_checkpoint_still_works(self, generator, journal, capsys, tmp_path, monkeypatch):
+        """rollback --dry-run with --checkpoint should still work as before."""
+        session_id = "test-sess"
+        journal.checkpoint(session_id, "cp1")
+        journal.record(session_id, "file-write", path="/tmp/a.txt", content_before="original")
+
+        session_dir = tmp_path / ".agent-undo"
+        session_dir.mkdir(exist_ok=True)
+        (session_dir / "session").write_text(session_id)
+        monkeypatch.chdir(tmp_path)
+
+        from agent_undo.cli import cmd_rollback
+        db_path = str(journal.db_path)
+        result = cmd_rollback([db_path, "--dry-run", "cp1"])
+
+        captured = capsys.readouterr()
+        assert result == 0
+        assert "=== Rollback Simulation ===" in captured.out
+        assert "[RESTORE] /tmp/a.txt" in captured.out
