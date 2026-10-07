@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 from .journal import Journal
@@ -19,11 +20,14 @@ def get_session_file() -> Path:
 
 
 def get_session_id() -> str:
-    """Get the current session ID."""
+    """Get or create a session ID for this agent-undo session."""
     sf = get_session_file()
     if sf.exists():
         return sf.read_text().strip()
-    return "unknown"
+    session_id = f"sess-{uuid.uuid4().hex[:12]}"
+    sf.parent.mkdir(parents=True, exist_ok=True)
+    sf.write_text(session_id)
+    return session_id
 
 
 def run_pre_tool_hook(tool_name: str, tool_input: str) -> None:
