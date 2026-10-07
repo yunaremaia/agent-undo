@@ -157,3 +157,45 @@ class TestFormatSimulation:
         output2 = simulate_rollback(generator, session_id, checkpoint_label="cp1")
 
         assert output1 == output2
+
+
+class TestDiffPreviewLineNumbers:
+    """Tests for diff preview line number fix — bug fix for issue #62."""
+
+    def test_diff_preview_uses_real_line_numbers(self, generator, journal):
+        """Diff preview must use real line numbers, not literal '@@ -1,N +1,N @@'."""
+        session_id = "test-sess"
+        journal.checkpoint(session_id, "cp1")
+        content = "line1\nline2\nline3\nline4\nline5"
+        journal.record(session_id, "file-write", path="/tmp/test.txt", content_before=content)
+
+        plan = generator.generate_plan(session_id, checkpoint_label="cp1")
+        output = format_simulation(plan)
+
+        # Should NOT contain the literal placeholder
+        assert "@@ -1,N +1,N @@" not in output
+        # Should contain real line numbers (5 lines)
+        assert "@@ -1,5 +1,5 @@" in output
+
+    def test_diff_preview_single_line_file(self, generator, journal):
+        """Single-line file should show @@ -1,1 +1,1 @@."""
+        session_id = "test-sess"
+        journal.checkpoint(session_id, "cp1")
+        journal.record(session_id, "file-write", path="/tmp/single.txt", content_before="only line")
+
+        plan = generator.generate_plan(session_id, checkpoint_label="cp1")
+        output = format_simulation(plan)
+
+        assert "@@ -1,1 +1,1 @@" in output
+
+    def test_diff_preview_empty_file(self, generator, journal):
+        """Empty file should show @@ -0,0 +1,0 @@ or similar."""
+        session_id = "test-sess"
+        journal.checkpoint(session_id, "cp1")
+        journal.record(session_id, "file-write", path="/tmp/empty.txt", content_before="")
+
+        plan = generator.generate_plan(session_id, checkpoint_label="cp1")
+        output = format_simulation(plan)
+
+        # Empty content has 0 lines
+        assert "@@ -1,N +1,N @@" not in output

@@ -269,7 +269,8 @@ def format_simulation(plan: RollbackPlan) -> str:
                 # For simulation, content_after is unknown — show original → current placeholder
                 lines.append(f"--- {op.path} (original, to be restored)")
                 lines.append(f"+++ {op.path} (current, will be overwritten)")
-                lines.append("@@ -1,N +1,N @@")
+                orig_line_count = len(op.content_before.splitlines())
+                lines.append(f"@@ -1,{orig_line_count} +1,{orig_line_count} @@")
                 # Show a few lines of the original content as context
                 orig_lines = op.content_before.splitlines()[:5]
                 for line in orig_lines:
