@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from dataclasses import dataclass
 
@@ -94,11 +95,8 @@ class RollbackGenerator:
         if op_type == "file-write" and op.get("content_before") is not None:
             path = op["path"]
             lines.append(f"if [ -f '{path}' ]; then")
-            # Escape content for heredoc-safe embedding
-            before = op["content_before"].replace("'", "'\\''")
-            lines.append(f"  cat > '{path}' << 'AGENT_UNDO_EOF'")
-            lines.append(f"{(before)}")
-            lines.append("AGENT_UNDO_EOF")
+            encoded = base64.b64encode(op["content_before"].encode()).decode()
+            lines.append(f"  echo '{encoded}' | base64 -d > '{path}'")
             lines.append("fi")
 
         elif op_type == "shell" and op.get("command"):
