@@ -166,9 +166,9 @@ class Journal:
                 """SELECT o.*, c.label as checkpoint_label
                    FROM operations o
                    LEFT JOIN checkpoints c ON c.operation_id = o.id
-                   WHERE o.session_id = ? AND o.timestamp > ?
+                   WHERE o.session_id = ? AND o.timestamp >= ? AND o.id != ?
                    ORDER BY o.timestamp DESC""",
-                (session_id, ts),
+                (session_id, ts, since_op_id),
             ).fetchall()
             return [dict(r) for r in rows]
 
